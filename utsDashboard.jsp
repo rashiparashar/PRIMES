@@ -15,6 +15,13 @@
 .table-wrapper-scroll-y {
 	display: block;
 }
+ .uts-kpi { background: #0b2545; color: #fff; border-radius: 4px; padding: 10px 12px; margin-bottom: 10px; text-align: center; }
+.uts-kpi-val { font-size: 22px; font-weight: 700; }
+ .uts-kpi-lbl { font-size: 12px; opacity: .85; }
+ .uts-rpt-table th { background: #0b2545; color: #fff; }
+ .uts-rpt-table td:first-child { font-weight: 600; background: #eef2fb; }
+.uts-rpt-table tr.uts-total td { background: #fce3bd; font-weight: 700; }
+
 </style>
 <script
 	src="<c:url value="/resources/assets/global/plugins/moment.min.js" />"
@@ -32,7 +39,7 @@
 						class="filter-btn" data-toggle="collapse"
 						data-target="#homefilter" id="fter" style="color: white;"></span>
 				</div> -->
-		<div class="portlet light bordered collapse shadow" id="homefilter">
+		<div class="portlet light bordered collapse shadow" id="homefilter"  style="padding: 5px 10px; margin-bottom: 5px; display:flex;">
 			<form class="row" method="get" onsubmit="return getAPROrBSData()">
 				<div class="row">
 					<div class="col-md-9">
@@ -735,7 +742,77 @@
 
 										</div>
 										<!-- END PORTLET-->
-									</div>
+										<!-- ===== UTS KPI ROW 1: AVERAGE PER DAY ===== -->
+		<div class="row uts-kpi-row" id="utsKpiAverageRow" style="margin-bottom: 5px; margin-top: 5px;">
+			<div class="col-md-4 col-sm-4 col-xs-4">
+				<div class="uts-kpi">
+					<div class="uts-kpi-val" id="kpiAvgTkt">-</div>
+					<div class="uts-kpi-lbl">Avg. Tickets / Day</div>
+				</div>
+			</div>
+			<div class="col-md-4 col-sm-4 col-xs-4">
+				<div class="uts-kpi">
+					<div class="uts-kpi-val" id="kpiAvgPsgn">-</div>
+					<div class="uts-kpi-lbl">Avg. Passengers / Day</div>
+				</div>
+			</div>
+			<div class="col-md-4 col-sm-4 col-xs-4">
+				<div class="uts-kpi">
+					<div class="uts-kpi-val" id="kpiAvgEarn">-</div>
+					<div class="uts-kpi-lbl">Avg. Earning / Day (&#8377;)</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- ===== UTS KPI ROW 2: TERMINALS / LOCATIONS / STATIONS ===== -->
+		<div class="row uts-kpi-row" id="utsKpiCountsRow" style="margin-bottom: 10px; margin-top: 5px;">
+			<div class="col-md-4 col-sm-4 col-xs-4">
+				<div class="uts-kpi">
+					<div class="uts-kpi-val" id="kpiTerminals">-</div>
+					<div class="uts-kpi-lbl">Working Terminals</div>
+				</div>
+			</div>
+			<div class="col-md-4 col-sm-4 col-xs-4">
+				<div class="uts-kpi">
+					<div class="uts-kpi-val" id="kpiLocations">-</div>
+					<div class="uts-kpi-lbl">Locations</div>
+				</div>
+			</div>
+			<div class="col-md-4 col-sm-4 col-xs-4">
+				<div class="uts-kpi">
+					<div class="uts-kpi-val" id="kpiStations">-</div>
+					<div class="uts-kpi-lbl">Stations</div>
+				</div>
+			</div>
+		</div>
+		<!-- ===== /UTS KPI STRIP ===== -->
+ 		<!-- ===== UTS REPORTS (added) ===== -->
+ 		<div class="row" id="utsPosReportRow" style="margin-top: 8px;">
+ 			<div class="col-md-12 no-padding">
+ 				<div class="span-div">
+ 					<div class="graphHeader shadow" style="margin-bottom: 0px;">
+ 						<span class="caption-subject bold uppercase">Point of Sale wise - Average per Day</span>
+ 					</div>
+ 					<div class="card">
+ 						<div class="card-body table-responsive">
+ 							<table class="table table-bordered uts-rpt-table" id="posReportTable">
+								<thead>
+ 									<tr>
+ 									<th>Sl No.</th>
+ 										<th>Point of Sale</th>
+ 										<th>Modes of Payment</th>
+ 										<th class="text-right">Avg. Tickets/Day</th>
+ 										<th class="text-right">Avg. Passengers/Day</th>
+										<th class="text-right">Avg. Earning/Day</th>
+ 									</tr>
+ 								</thead>
+ 								<tbody id="posReportBody"></tbody>
+ 							</table>
+ 						</div>
+ 					</div>
+ 				</div>
+ 			</div>
+ 		</div>
 								</div>
 							</div>
 						</div>
