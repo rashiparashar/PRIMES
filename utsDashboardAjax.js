@@ -244,7 +244,7 @@ function sheetPadClick(pad){
 	    $("#favitable_netTicketsBooked").hide();
 	 	$("#favigraph_totalTotalEarnings").hide();
        $("#favitable_totalTotalEarnings").hide();
-       $("#table_1").hide();
+       $("#table_1, #tableWrap").hide();
 	    
 		devBy = 1000;
 		c1YTitle = "Passenger Booked (Thousands)";
@@ -270,7 +270,7 @@ function sheetPadClick(pad){
 	    $("#favitable_totalNetPassengers").hide();
 		$("#favigraph_totalTotalEarnings").hide();
        $("#favitable_totalTotalEarnings").hide();
-       $("#table_1").hide();
+       $("#table_1, #tableWrap").hide();
 		devBy = 1000;
 		c1YTitle = "Tickets Booked (Thousands)";
 		cat = "netTktsBkd";
@@ -301,7 +301,7 @@ function sheetPadClick(pad){
 		    $("#favitable_netTicketsBooked").hide();
 		    $("#favigraph_totalNetPassengers").hide();
 		    $("#favitable_totalNetPassengers").hide();
-		    $("#table_1").hide();
+		    $("#table_1, #tableWrap").hide();
 		    for (var i = 0; i < json.data.length; i++) {
 		           earningLastYearComparison.push({
 		               date: json.data[i][1],
@@ -330,7 +330,7 @@ function sheetPadClick(pad){
  		    $("#favitable_netTicketsBooked").hide();
  		    $("#favigraph_totalNetPassengers").hide();
  		    $("#favitable_totalNetPassengers").hide();
- 		  $("#table_1").hide();
+ 		  $("#table_1, #tableWrap").hide();
  	      } 
    }
 	ChartsAmchartsBookingStatisticsLYC("chart_1");
@@ -371,7 +371,7 @@ function table_totalTotalEarnings() {
 	}
 
 	$("#chart_1").hide();
-	$("#table_1").show();
+	$("#table_1, #tableWrap").show();
 
 }
 function table_netTicketsBooked() {
@@ -395,7 +395,7 @@ function table_netTicketsBooked() {
 	}
 
 	$("#chart_1").hide();
-	$("#table_1").show();
+	$("#table_1, #tableWrap").show();
 
 }
 
@@ -420,7 +420,7 @@ function table_totalNetPassengers() {
 	}
 
 	$("#chart_1").hide();
-	$("#table_1").show();
+	$("#table_1, #tableWrap").show();
 
 }
 function setAllIndiaData(result){
@@ -592,6 +592,7 @@ function checkLeapYear(year) {
 var UTS_RPT_CFG = {
 	    pos: {
 	        reportCode: "UTSPOSSUMMARY",
+	        valuesAreTotals: true,
 	        col: {
 	            pos: 0,
 	            mode: 1,
@@ -682,6 +683,9 @@ function utsCall(cfg, cb) {
         } else if (code === UTS_RPT_CFG.kpi.reportCode) {
             $("#kpiTerminals, #kpiLocations, #kpiStations")
                 .text("Timeout");
+        } else if (code === UTS_RPT_CFG.kpi.reportCode) {
+            $("#kpiStations")
+                .text("Timeout");
         } else if (code === UTS_RPT_CFG.report2.reportCode) {
             $("#report2Body").html(message);
         }
@@ -738,48 +742,56 @@ function utsCall(cfg, cb) {
 /* ---------- 1) POS report + KPI averages ---------- */
 
 
+/* Number of days in the selected range (both ends included) */
+function utsDayCount() {
+    var d = moment(utsTo, "YYYY-MM-DD").diff(moment(utsFrom, "YYYY-MM-DD"), "days") + 1;
+    return d > 0 ? d : 1;
+}
+
+/* Leading number of a cell such as "12,345 (4.5%)" -> 12345 */
+function utsNum(v) {
+    var m = String(v == null ? "" : v).replace(/,/g, "").match(/^-?\d+(?:\.\d+)?/);
+    return m ? parseFloat(m[0]) : NaN;
+}
+
+function utsLakh(v) {
+    return (v / 100000).toFixed(2);
+}
+
+function utsResetAvgKpis() {
+    $("#kpiAvgTkt, #kpiAvgPsgn, #kpiAvgEarn").text("-");
+}
+
 function loadUtsPosReport() {
-    $("#posReportBody").html(
-        '<tr><td colspan="6" class="text-center">Loading...</td></tr>'
-    );
+    var $body = $("#posReportBody");
+
+    $body.html('<tr><td colspan="6" class="text-center">Loading...</td></tr>');
+    utsResetAvgKpis();
 
     utsCall(UTS_RPT_CFG.pos, function (response) {
 
-        var columnNames = response && Array.isArray(response.columnNames)
-            ? response.columnNames
-            : [];
+        var rows = Array.isArray(response)
+            ? response
+            : (response && Array.isArray(response.data) ? response.data : []);
 
-        var rows = response && Array.isArray(response.data)
-            ? response.data
-            : response;
-
-        if (!Array.isArray(rows) || rows.length === 0) {
-            $("#posReportBody").html(
-                '<tr><td colspan="6" class="text-center">' +
-                'Record not found</td></tr>'
+        if (!rows.length) {
+            $body.html(
+                '<tr><td colspan="6" class="text-center">Record not found</td></tr>'
             );
             return;
         }
 
-        var headers = columnNames.length > 0
-            ? columnNames
-            : [
-                "Sl No.",
-                "POINT OF SALE",
-                "MODES OF PAYMENT",
-                "AVG. TICKETS/DAY",
-                "AVG. PASSENGERS/DAY",
-                "AVG. EARNING/DAY"
-            ];
+        // POS values are totals for the selected range -> divide by no. of days.
+        // (set UTS_RPT_CFG.pos.valuesAreTotals = false if the procedure already
+        //  returns per-day averages)
+        var days = utsDayCount();
+        var divisor = UTS_RPT_CFG.pos.valuesAreTotals ? days : 1;
 
-        var html = "";
+        var sumT = 0, sumP = 0, sumE = 0, sl = 0, html = "";
 
-        // Display the column headings only if your JSP does not
-        // already contain the table's <thead>.
-        // The rows below contain data cells only.
         rows.forEach(function (row) {
-            var values = Array.isArray(row)
-                ? row
+            var v = Array.isArray(row)
+                ? row.slice()
                 : [
                     row["Sl No."],
                     row["POINT OF SALE"],
@@ -789,28 +801,44 @@ function loadUtsPosReport() {
                     row["AVG. EARNING/DAY"]
                 ];
 
-            html += "<tr>";
-
-            for (var i = 0; i < 6; i++) {
-                var value = values[i] == null ? "" : String(values[i]);
-
-                // Remove percentage figures and convert numeric columns to lakhs.
-                if (i >= 3 && i <= 5) {
-                    var numericValue = parseFloat(
-                        value.replace(/,/g, "").match(/^-?\d+(?:\.\d+)?/)
-                    );
-
-                    value = !isNaN(numericValue)
-                        ? (numericValue / 100000).toFixed(2)
-                        : "";
-                }
-
-                html += "<td>" + utsEsc(value) + "</td>";
+            if (v.length === 5) {
+                v.unshift("");              // procedure sent no Sl No. column
             }
 
-            html += "</tr>";
+            var name = v[1] == null ? "" : String(v[1]);
+
+            // we build our own total row, so ignore one coming from the procedure
+            if (/^\s*(grand\s*)?total\s*$/i.test(name)) {
+                return;
+            }
+
+            var t = utsNum(v[3]), p = utsNum(v[4]), e = utsNum(v[5]);
+
+            if (!isNaN(t)) sumT += t;
+            if (!isNaN(p)) sumP += p;
+            if (!isNaN(e)) sumE += e;
+
+            html += "<tr>"
+                + "<td>" + utsEsc(v[0] === "" || v[0] == null ? ++sl : v[0]) + "</td>"
+                + "<td>" + utsEsc(name) + "</td>"
+                + "<td>" + utsEsc(v[2]) + "</td>"
+                + '<td class="text-right">' + (isNaN(t) ? "" : utsFmt(t / divisor)) + "</td>"
+                + '<td class="text-right">' + (isNaN(p) ? "" : utsFmt(p / divisor)) + "</td>"
+                + '<td class="text-right">' + (isNaN(e) ? "" : utsLakh(e / divisor)) + "</td>"
+                + "</tr>";
         });
 
+        html += '<tr class="uts-total"><td></td><td colspan="2">Total</td>'
+            + '<td class="text-right">' + utsFmt(sumT / divisor) + "</td>"
+            + '<td class="text-right">' + utsFmt(sumP / divisor) + "</td>"
+            + '<td class="text-right">' + utsLakh(sumE / divisor) + "</td></tr>";
+
+        $body.html(html);
+
+        // KPI strip = POS totals / no. of days
+        $("#kpiAvgTkt").text(utsFmt(sumT / divisor));
+        $("#kpiAvgPsgn").text(utsFmt(sumP / divisor));
+        $("#kpiAvgEarn").text(utsLakh(sumE / divisor));
     });
 }
 
