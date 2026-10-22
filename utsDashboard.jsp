@@ -15,13 +15,70 @@
 .table-wrapper-scroll-y {
 	display: block;
 }
- .uts-kpi { background: #0b2545; color: #fff; border-radius: 4px; padding: 10px 12px; margin-bottom: 10px; text-align: center; }
+.uts-kpi { background: #0b2545; color: #fff; border-radius: 4px; padding: 10px 12px; text-align: center; }
 .uts-kpi-val { font-size: 22px; font-weight: 700; }
- .uts-kpi-lbl { font-size: 12px; opacity: .85; }
- .uts-rpt-table th { background: #0b2545; color: #fff; }
- .uts-rpt-table td:first-child { font-weight: 600; background: #eef2fb; }
+.uts-kpi-lbl { font-size: 12px; opacity: .85; }
 .uts-rpt-table tr.uts-total td { background: #fce3bd; font-weight: 700; }
-
+.uts-ai-block { display: flex; flex-direction: column; }
+.uts-ai-head { position: relative; margin-bottom: 0 !important; padding: 6px 110px 6px 10px !important; }
+.uts-ai-dates { display: block; font-size: 11px; font-weight: 400; text-transform: none; line-height: 14px; }
+.uts-ai-open { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #fff; color: #044e65 !important; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 3px; text-decoration: none !important; cursor: pointer; }
+.uts-ai-card { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; margin-bottom: 0; overflow: hidden; }
+.uts-ai-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 8px !important; }
+.uts-kpi-grid { flex: 0 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+.uts-kpi-grid .uts-kpi { margin: 0; padding: 5px 8px; }
+.uts-kpi-grid .uts-kpi-val { font-size: 18px; line-height: 22px; }
+.uts-kpi-grid .uts-kpi-lbl { font-size: 11px; }
+.uts-pos-block { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.uts-pos-title { flex: 0 0 auto; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #044e65; margin-bottom: 4px; }
+.uts-pos-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; background: #fff; }
+.uts-rpt-table { margin-bottom: 0; font-size: 12px; }
+.uts-rpt-table > thead > tr > th, .uts-rpt-table > tbody > tr > td { padding: 3px 6px; }
+/* ===== layout ===== */
+/* hidden filter panel must not take space */
+#homefilter.collapse:not(.in) { display: none !important; }
+#utsMainRow { display: flex; flex-wrap: wrap; align-items: stretch; }
+#utsMainRow:before, #utsMainRow:after { display: none; }
+#utsLeftCol, #utsRightCol { display: flex; flex-direction: column; }
+#utsLeftCol > a { flex: 1 1 auto; display: flex !important; flex-direction: column; }
+#utsLeftCol > a > .span-div { flex: 1 1 auto; display: flex; flex-direction: column; }
+#utsLeftCol > a > .span-div > .card { flex: 1 1 auto; }
+.uts-booking-block { flex: 1 1 0; min-height: 340px; display: flex; flex-direction: column; }
+.uts-fill-card { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; margin-bottom: 0; }
+.uts-fill-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 8px !important; }
+.uts-fill-body > * { flex-shrink: 0; }
+.uts-alert { padding: 4px !important; margin-bottom: 6px !important; text-align: center; }
+.uts-fill-body .dashboard-stat { margin-bottom: 6px; }
+.uts-chart-block { position: relative; flex: 1 1 0 !important; min-height: 140px; }
+.uts-chart-tools { height: 22px; line-height: 22px; }
+#chart_1, #tableWrap { position: absolute; top: 22px; right: 0; bottom: 0; left: 0; }
+#chart_1 { height: auto !important; }
+#tableWrap { display: none; overflow: auto; height: auto !important; }
+.uts-ai-block { flex: 0 1 auto; min-height: 0; margin-top: 8px; }
+/* ===== Full Report view (same page): only the All India block + filters ===== */
+.uts-ai-filter { display: none; flex-wrap: wrap; align-items: flex-end; gap: 10px; padding: 10px 12px; margin-bottom: 8px; background: #fff; border: 1px solid #ddd; }
+.uts-ai-filter .uts-f label { display: block; font-weight: 700; margin-bottom: 3px; }
+#utsMainRow.uts-focus .uts-ai-filter { display: flex; }
+#utsMainRow.uts-focus #utsLeftCol, #utsMainRow.uts-focus .uts-booking-block { display: none !important; }
+#utsMainRow.uts-focus #utsRightCol { width: 100%; }
+#utsMainRow.uts-focus #utsRightFill { position: static; }
+#utsMainRow.uts-focus .uts-ai-block { margin-top: 0; flex: 0 0 auto; }
+#utsMainRow.uts-focus .uts-ai-card { overflow: visible; }
+#utsMainRow.uts-focus .uts-kpi-grid { grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 14px; }
+#utsMainRow.uts-focus .uts-kpi-grid .uts-kpi { padding: 12px 8px; }
+#utsMainRow.uts-focus .uts-kpi-grid .uts-kpi-val { font-size: 24px; line-height: 28px; }
+#utsMainRow.uts-focus .uts-pos-scroll { overflow: visible; }
+#utsMainRow.uts-focus .uts-rpt-table { font-size: 14px; }
+#utsMainRow.uts-focus .uts-rpt-table > thead > tr > th, #utsMainRow.uts-focus .uts-rpt-table > tbody > tr > td { padding: 6px 10px; }
+@media (min-width: 992px) {
+  #utsRightCol { position: relative; }
+  #utsRightFill { position: absolute; top: 0; bottom: 0; left: 15px; right: 15px; display: flex; flex-direction: column; }
+}
+@media (max-width: 991px) {
+  #utsMainRow { display: block; }
+  .uts-booking-block { min-height: 0; }
+  .uts-chart-block { min-height: 320px; }
+}
 </style>
 <script
 	src="<c:url value="/resources/assets/global/plugins/moment.min.js" />"
@@ -39,7 +96,7 @@
 						class="filter-btn" data-toggle="collapse"
 						data-target="#homefilter" id="fter" style="color: white;"></span>
 				</div> -->
-		<div class="portlet light bordered collapse shadow" id="homefilter"  style="padding: 5px 10px; margin-bottom: 5px; display:flex;">
+		<div class="portlet light bordered collapse shadow" id="homefilter"  style="padding: 5px 10px; margin-bottom: 5px;">
 			<form class="row" method="get" onsubmit="return getAPROrBSData()">
 				<div class="row">
 					<div class="col-md-9">
@@ -128,10 +185,9 @@
 		<!-- 		commented by ricky	</div>
 		</div>
 	</div> -->
-		<div class="row">
+		<div class="row" id="utsMainRow">
 
-			<a href="zoneMapUts" title="Zone Map Report"><div
-					class="col-md-6 no-padding" style="">
+			<div class="col-md-6 no-padding" id="utsLeftCol"><a href="zoneMapUts" title="Zone Map Report" style="display:block;">
 					<div class="span-div">
 						<div class="graphHeader shadow" style="margin-bottom: 0px;">
 							<span class="caption-subject bold uppercase">Zone Map(UTS)</span>
@@ -575,26 +631,20 @@
 							</div>
 						</div>
 					</div>
-				</div> </a>
-			<div class="col-md-6">
-				<div class="span-div">
+				</a>
+			</div>
+			<div class="col-md-6" id="utsRightCol">
+				<div id="utsRightFill">
+				<div class="uts-booking-block">
 					<div class="graphHeader shadow" style="margin-bottom: 0px;">
-						<span class="caption-subject bold uppercase">Booking
-							Statistics(UTS)</span>
-						<!-- <span style="float:right;" id="BSFromToDate" class="caption-subject uppercase"></span> -->
+						<span class="caption-subject bold uppercase">Booking Statistics(UTS)</span>
 					</div>
-					<div class="card">
-						<div id="" class="card-body">
-							<!--commented by ricky <div class="alert alert-success"
-							style="padding: 5px; margin-bottom: 8px; text-align: center;">
-							<span id="BSLoc" class="caption-subject uppercase"> </span>
-						</div> -->
-							<div class="alert alert-info"
-								style="padding: 5px; margin-bottom: 8px; text-align: center;">
+					<div class="card uts-fill-card">
+						<div class="card-body uts-fill-body">
+							<div class="alert alert-info uts-alert">
 								<span id="BSFromToDate" class="caption-subject uppercase"></span>
 							</div>
-							<div class="">
-								<div class="row sheet-padd">
+							<div class="row sheet-padd">
 									<div class="col-lg-4 col-md-4 col-sm-4 col-xs-4"
 										id="sheetPadNP">
 										<a class="dashboard-stat dashboard-stat-v2 green"
@@ -664,159 +714,80 @@
 									</div>
 								</div>
 
-								<!-- END DASHBOARD STATS 1-->
-								<div class="row">
-									<div class="col-lg-12 col-xs-12 col-sm-12"
-										style="paddding: 0px">
-										<!-- BEGIN PORTLET-->
-										<div class="portlet light bordered"
-											style="margin-bottom: 0px; padding-bottom: 24px;">
-											<div class="portlet-title">
-												<div class="caption">
-													<i class="icon-bar-chart font-green-haze"></i> <span
-														class="caption-subject bold uppercase font-green-haze"
-														style="font-size: 10px">EARNING LAST YEAR
-														COMPARISON</span>
-												</div>
-												<div class="tools">
-													<a href="javascript:;" class="collapse"></a> <a
-														href="javascript:;" class="reload"></a> <a
-														href="javascript:;" class="fullscreen"></a> <a
-														href="javascript:;" class="remove"></a>
-												</div>
-											</div>
-
-											<div class="col-lg-12">
-												<i class="fa fa-bar-chart" aria-hidden="true"
-													onclick="showgraphdataP();" style="cursor: pointer;"
-													id="favigraph_totalNetPassengers"></i> <i
-													class="fa fa-table" aria-hidden="true"
-													onclick="table_totalNetPassengers();"
-													style="cursor: pointer;" id="favitable_totalNetPassengers"></i>
-												&nbsp;&nbsp; <i class="fa fa-bar-chart" aria-hidden="true"
-													onclick="showgraphdataT();" style="cursor: pointer;"
-													id="favigraph_netTicketsBooked"></i> <i class="fa fa-table"
-													aria-hidden="true" onclick="table_netTicketsBooked();"
-													style="cursor: pointer;" id="favitable_netTicketsBooked"></i>
-												&nbsp;&nbsp; <i class="fa fa-bar-chart" aria-hidden="true"
-													onclick="showgraphdataE();" style="cursor: pointer;"
-													id="favigraph_totalTotalEarnings"></i> <i
-													class="fa fa-table" aria-hidden="true"
-													onclick="table_totalTotalEarnings();"
-													style="cursor: pointer;" id="favitable_totalTotalEarnings"></i>
-												&nbsp;&nbsp;
-											</div>
-
-
-											<div class="portlet-body">
-												<div id="chart_1" class="chart" style="height: 400px;"
-													style="paddding:0px">
-													<img
-														src="<c:url value="/resources/assets/global/img/ajax-loading.gif"/>"
-														alt="loading">
-												</div>
-											</div>
-											<div class="portlet-body" style="display: hide">
-												<div
-													class="chart table-wrapper-scroll-y my-custom-scrollbar"
-													style="height: 400px;">
-													<table
-														class="table table-hover  table-bordered table-striped mb-0"
-														style="display: none" id="table_1">
-														<thead>
-															<tr>
-																<th>Txn Date</th>
-																<th>Current Year</th>
-																<th>Last Year</th>
-
-
-															</tr>
-														</thead>
-														<tbody id="tblrdata">
-
-
-														</tbody>
-													</table>
-												</div>
-											</div>
-
-										</div>
-										<!-- END PORTLET-->
-										<!-- ===== UTS KPI ROW 1: AVERAGE PER DAY ===== -->
-		<div class="row uts-kpi-row" id="utsKpiAverageRow" style="margin-bottom: 5px; margin-top: 5px;">
-			<div class="col-md-4 col-sm-4 col-xs-4">
-				<div class="uts-kpi">
-					<div class="uts-kpi-val" id="kpiAvgTkt">-</div>
-					<div class="uts-kpi-lbl">Avg. Tickets / Day</div>
-				</div>
-			</div>
-			<div class="col-md-4 col-sm-4 col-xs-4">
-				<div class="uts-kpi">
-					<div class="uts-kpi-val" id="kpiAvgPsgn">-</div>
-					<div class="uts-kpi-lbl">Avg. Passengers / Day</div>
-				</div>
-			</div>
-			<div class="col-md-4 col-sm-4 col-xs-4">
-				<div class="uts-kpi">
-					<div class="uts-kpi-val" id="kpiAvgEarn">-</div>
-					<div class="uts-kpi-lbl">Avg. Earning / Day (&#8377;)</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- ===== UTS KPI ROW 2: TERMINALS / LOCATIONS / STATIONS ===== -->
-		<div class="row uts-kpi-row" id="utsKpiCountsRow" style="margin-bottom: 10px; margin-top: 5px;">
-			<div class="col-md-4 col-sm-4 col-xs-4">
-				<div class="uts-kpi">
-					<div class="uts-kpi-val" id="kpiTerminals">-</div>
-					<div class="uts-kpi-lbl">Working Terminals</div>
-				</div>
-			</div>
-			<div class="col-md-4 col-sm-4 col-xs-4">
-				<div class="uts-kpi">
-					<div class="uts-kpi-val" id="kpiLocations">-</div>
-					<div class="uts-kpi-lbl">Locations</div>
-				</div>
-			</div>
-			<div class="col-md-4 col-sm-4 col-xs-4">
-				<div class="uts-kpi">
-					<div class="uts-kpi-val" id="kpiStations">-</div>
-					<div class="uts-kpi-lbl">Stations</div>
-				</div>
-			</div>
-		</div>
-		<!-- ===== /UTS KPI STRIP ===== -->
- 		<!-- ===== UTS REPORTS (added) ===== -->
- 		<div class="row" id="utsPosReportRow" style="margin-top: 8px;">
- 			<div class="col-md-12 no-padding">
- 				<div class="span-div">
- 					<div class="graphHeader shadow" style="margin-bottom: 0px;">
- 						<span class="caption-subject bold uppercase">Point of Sale wise - Average per Day</span>
- 					</div>
- 					<div class="card">
- 						<div class="card-body table-responsive">
- 							<table class="table table-bordered uts-rpt-table" id="posReportTable">
-								<thead>
- 									<tr>
- 									<th>Sl No.</th>
- 										<th>Point of Sale</th>
- 										<th>Modes of Payment</th>
- 										<th class="text-right">Avg. Tickets/Day</th>
- 										<th class="text-right">Avg. Passengers/Day</th>
-										<th class="text-right">Avg. Earning/Day</th>
- 									</tr>
- 								</thead>
- 								<tbody id="posReportBody"></tbody>
- 							</table>
- 						</div>
- 					</div>
- 				</div>
- 			</div>
- 		</div>
+							<div class="uts-chart-block">
+								<div class="uts-chart-tools">
+									<i class="fa fa-bar-chart" aria-hidden="true" onclick="showgraphdataP();" style="cursor: pointer;" id="favigraph_totalNetPassengers"></i>
+									<i class="fa fa-table" aria-hidden="true" onclick="table_totalNetPassengers();" style="cursor: pointer;" id="favitable_totalNetPassengers"></i>
+									&nbsp;&nbsp;
+									<i class="fa fa-bar-chart" aria-hidden="true" onclick="showgraphdataT();" style="cursor: pointer;" id="favigraph_netTicketsBooked"></i>
+									<i class="fa fa-table" aria-hidden="true" onclick="table_netTicketsBooked();" style="cursor: pointer;" id="favitable_netTicketsBooked"></i>
+									&nbsp;&nbsp;
+									<i class="fa fa-bar-chart" aria-hidden="true" onclick="showgraphdataE();" style="cursor: pointer;" id="favigraph_totalTotalEarnings"></i>
+									<i class="fa fa-table" aria-hidden="true" onclick="table_totalTotalEarnings();" style="cursor: pointer;" id="favitable_totalTotalEarnings"></i>
+								</div>
+								<div id="chart_1" class="chart">
+									<img src="<c:url value="/resources/assets/global/img/ajax-loading.gif"/>" alt="loading">
+								</div>
+								<div id="tableWrap" class="chart table-wrapper-scroll-y">
+									<table class="table table-hover table-bordered table-striped mb-0" style="display: none" id="table_1">
+										<thead>
+											<tr>
+												<th>Txn Date</th>
+												<th>Current Year</th>
+												<th>Last Year</th>
+											</tr>
+										</thead>
+										<tbody id="tblrdata"></tbody>
+									</table>
 								</div>
 							</div>
 						</div>
 					</div>
+				</div>
+				<!-- ===== ALL INDIA REPORT (KPIs + POS) ===== -->
+				<div class="uts-ai-block" id="utsAllIndiaBlock">
+					<div class="uts-ai-filter" id="utsAIFilter">
+						<div class="uts-f"><label for="utsFrom">From Date</label><input type="date" class="form-control" id="utsFrom"></div>
+						<div class="uts-f"><label for="utsTo">To Date</label><input type="date" class="form-control" id="utsTo"></div>
+						<div class="uts-f"><label for="utsZone">Zone</label><input type="text" class="form-control" id="utsZone" value="ALL" maxlength="10" style="text-transform: uppercase"></div>
+						<div class="uts-f"><button type="button" class="btn blue" id="utsApply"><i class="fa fa-search"></i> Apply</button></div>
+					</div>
+					<div class="graphHeader shadow uts-ai-head">
+						<span class="caption-subject bold uppercase" id="utsAITitle">All India Report</span>
+						<span class="uts-ai-dates" id="utsAIDates"></span>
+						<a href="javascript:;" class="uts-ai-open" id="utsAIToggle" title="Show only this report with date and zone filters"><i class="fa fa-external-link"></i> <span>Full Report</span></a>
+					</div>
+					<div class="card uts-ai-card">
+						<div class="card-body uts-ai-body">
+							<div class="uts-kpi-grid" id="utsKpiRow">
+								<div class="uts-kpi"><div class="uts-kpi-val" id="kpiAvgTkt">-</div><div class="uts-kpi-lbl">Avg. Tickets / Day</div></div>
+								<div class="uts-kpi"><div class="uts-kpi-val" id="kpiAvgPsgn">-</div><div class="uts-kpi-lbl">Avg. Passengers / Day</div></div>
+								<div class="uts-kpi"><div class="uts-kpi-val" id="kpiAvgEarn">-</div><div class="uts-kpi-lbl">Avg. Earning / Day (&#8377; Lakhs)</div></div>
+								<div class="uts-kpi"><div class="uts-kpi-val" id="kpiTerminals">-</div><div class="uts-kpi-lbl">Working Terminals</div></div>
+								<div class="uts-kpi"><div class="uts-kpi-val" id="kpiLocations">-</div><div class="uts-kpi-lbl">Locations</div></div>
+								<div class="uts-kpi"><div class="uts-kpi-val" id="kpiStations">-</div><div class="uts-kpi-lbl">Stations</div></div>
+							</div>
+							<div class="uts-pos-block" id="utsPosReportRow">
+								<div class="uts-pos-title">Point of Sale wise - Average per Day</div>
+								<div class="uts-pos-scroll">
+									<table class="table table-bordered uts-rpt-table" id="posReportTable">
+										<thead>
+											<tr>
+												<th>Sl No.</th>
+												<th>Point of Sale</th>
+												<th>Modes of Payment</th>
+												<th class="text-right">Avg. Tickets/Day</th>
+												<th class="text-right">Avg. Passengers/Day</th>
+												<th class="text-right">Avg. Earning/Day (&#8377; Lakhs)</th>
+											</tr>
+										</thead>
+										<tbody id="posReportBody"></tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 				</div>
 			</div>
 		</div>
