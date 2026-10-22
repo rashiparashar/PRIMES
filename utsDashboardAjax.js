@@ -588,174 +588,179 @@ function checkLeapYear(year) {
     }
 }
 
-
+/* ===================================================================
+ * UTS All India Report (KPIs + POS table)  -  used by utsDashboard.jsp
+ *
+ * Report codes (register each one in the backend report-code mapping):
+ *   UTSPOSSUMMARY    POS wise summary      -> pos table + avg tickets/passengers/earning KPIs
+ *   UTSTERMLOCCOUNT  location + terminal   -> kpiLocations, kpiTerminals (row 0, cols 0,1)
+ *                                             rashi.uts_dashboard_summary2(@from_date,@to_date,@zone_code)
+ *   UTSSTATIONCOUNT  stations              -> kpiStations (row 0, col 0)
+ *
+ * Parameters: [from, to]; the zone is added as 3rd parameter in Full Report
+ * mode (and always for UTSTERMLOCCOUNT).
+ * =================================================================== */
 var UTS_RPT_CFG = {
-	    pos: {
-	        reportCode: "UTSPOSSUMMARY",
-	        valuesAreTotals: true,
-	        col: {
-	            pos: 0,
-	            mode: 1,
-	            tickets: 2,
-	            passengers: 3,
-	            earning: 4
-	        }
-	    },
+    pos: {
+        reportCode: "UTSPOSSUMMARY",
+        valuesAreTotals: true
+    },
+    termLoc: {
+        reportCode: "UTSTERMLOCCOUNT",
+        alwaysZone: true,                       // rashi.uts_dashboard_summary2 (@from_date, @to_date, @zone_code)
+        col: { locations: 1, terminals: 2 }    
+    },
+    station: {
+        reportCode: "UTSSTATIONCOUNT",
+        col: { stations: 1 }
+    }
+};
 
-	    kpi: {
-	        reportCode: "UTSKPICOUNTS",
-	        col: {
-	            terminals: 0,
-	            locations: 1,
-	            stations: 2
-	        }
-	    }
-	};
+var UTS_REPORT_URL = (typeof weburl !== "undefined" && weburl) ? weburl : "typeOneUts/getReportUts";
+ var UTS_TIMEOUT_MS = 60000;;
 
-/* ---------- Date range: default = current financial year ---------- */
 
 function utsDefaultFrom() {
     var m = moment();
-    var y = m.month() >= 3 ? m.year() : m.year() - 1;   // month() is 0-based, April = 3
+    var y = m.month() >= 3 ? m.year() : m.year() - 1;   // April = month 3
     return y + "-04-01";
 }
 
-var utsFrom = utsDefaultFrom();
-var utsTo   = moment().subtract(1, "days").format("YYYY-MM-DD");
-if (utsTo < utsFrom) {
-    utsTo = utsFrom;                                    // e.g. on 1 April
+function utsDefaultTo() {
+    var to = moment().subtract(1, "days").format("YYYY-MM-DD");
+    var from = utsDefaultFrom();
+    return to < from ? from : to;                        // e.g. on 1 April
 }
+
+var utsFrom = utsDefaultFrom();
+var utsTo = utsDefaultTo();
+var utsZone = "ALL";
+var utsGen = 0;          // bumped on every reload so late responses are ignored
 
 /* ---------- Helpers ---------- */
 
-function utsFmt(n) {
-    var v = Number(n);
+var utsFocus = false;     // true = "Full Report" view (only the All India block + filters)
 
-    return isNaN(v)
-        ? (n == null ? "" : n)
-        : v.toLocaleString("en-IN", {
-            maximumFractionDigits: 0
-        });
+function utsHasZoneFilter() {
+    return utsFocus;
 }
 
-function utsPct(v, total) {
-    return total
-        ? " (" + (v / total * 100).toFixed(2) + "%)"
-        : "";
+/* Full Report view: hide map + booking statistics, show From / To / Zone inputs */
+function utsSetFocus(on) {
+    utsFocus = !!on;
+
+    $("#utsMainRow").toggleClass("uts-focus", utsFocus);
+    $("#utsAIToggle i").attr("class", utsFocus ? "fa fa-arrow-left" : "fa fa-external-link");
+    $("#utsAIToggle span").text(utsFocus ? "Back" : "Full Report");
+
+    // both views start from: this FY till yesterday, zone ALL
+    utsReloadAll(utsDefaultFrom(), utsDefaultTo(), "ALL");
+
+    if (!utsFocus) {
+        $(window).trigger("resize");
+    }
+}
+
+function utsCleanZone(z) {
+    var v = String(z == null ? "" : z).replace(/[^A-Za-z0-9 _\-]/g, "").trim().toUpperCase();
+    return v || "ALL";
+}
+
+function utsFmt(n) {
+    var v = Number(n);
+    return (n === "" || n == null || isNaN(v))
+        ? (n == null ? "" : n)
+        : v.toLocaleString("en-IN", { maximumFractionDigits: 0 });
+}
+
+function utsLakh(v) {
+    return (v / 100000).toFixed(2);
 }
 
 function utsEsc(s) {
     return $("<div>").text(s == null ? "" : s).html();
 }
 
-function utsParams() {
-    return [
-        "'" + utsFrom + "'",
-        "'" + utsTo + "'"
-    ];
-}
-
-function utsCall(cfg, cb) {
-    var code = (typeof cfg === "string") ? cfg : cfg.reportCode;
-    var req = {
-        reportCode: code,
-        params: utsParams()
-    };
-
-    console.log("UTS request:", JSON.stringify(req));
-
-    var done = false;
-
-    var timer = setTimeout(function () {
-        if (done) return;
-
-        done = true;
-        console.error("UTS request timed out:", code);
-
-        var message =
-            '<tr><td colspan="5" class="text-center text-danger">' +
-            'Request timed out for ' + utsEsc(code) +
-            '. Check Network tab and backend mapping.' +
-            '</td></tr>';
-
-        if (code === UTS_RPT_CFG.pos.reportCode) {
-            $("#posReportBody").html(message);
-        } else if (code === UTS_RPT_CFG.kpi.reportCode) {
-            $("#kpiTerminals, #kpiLocations, #kpiStations")
-                .text("Timeout");
-        } else if (code === UTS_RPT_CFG.kpi.reportCode) {
-            $("#kpiStations")
-                .text("Timeout");
-        } else if (code === UTS_RPT_CFG.report2.reportCode) {
-            $("#report2Body").html(message);
-        }
-    }, 20000);
-
-    try {
-        getWebServiceDatautsDashboard(req, weburl, function (result) {
-            if (done) return;
-
-            done = true;
-            clearTimeout(timer);
-
-            console.log("UTS response [" + code + "]:", result);
-
-            if (!result || !Array.isArray(result.data)) {
-                console.error("Invalid response for " + code, result);
-
-                if (code === UTS_RPT_CFG.kpi.reportCode) {
-                    $("#kpiTerminals, #kpiLocations, #kpiStations")
-                        .text("No data");
-                }
-
-                cb([]);
-                return;
-            }
-
-            cb(result.data);
-        });
-    } catch (e) {
-        if (done) return;
-
-        done = true;
-        clearTimeout(timer);
-
-        console.error("UTS request failed [" + code + "]:", e);
-
-        if (code === UTS_RPT_CFG.kpi.reportCode) {
-            $("#kpiTerminals, #kpiLocations, #kpiStations")
-                .text("Error");
-        } else if (code === UTS_RPT_CFG.pos.reportCode) {
-            $("#posReportBody").html(
-                '<tr><td colspan="5" class="text-center text-danger">' +
-                'Unable to load POS report.</td></tr>'
-            );
-        } else {
-            $("#report2Body").html(
-                '<tr><td colspan="4" class="text-center text-danger">' +
-                'Unable to load Report 2.</td></tr>'
-            );
-        }
-    }
-}
-
-/* ---------- 1) POS report + KPI averages ---------- */
-
-
-/* Number of days in the selected range (both ends included) */
-function utsDayCount() {
-    var d = moment(utsTo, "YYYY-MM-DD").diff(moment(utsFrom, "YYYY-MM-DD"), "days") + 1;
-    return d > 0 ? d : 1;
-}
-
-/* Leading number of a cell such as "12,345 (4.5%)" -> 12345 */
+/* leading number of a cell such as "12,345 (4.5%)" -> 12345 */
 function utsNum(v) {
     var m = String(v == null ? "" : v).replace(/,/g, "").match(/^-?\d+(?:\.\d+)?/);
     return m ? parseFloat(m[0]) : NaN;
 }
 
-function utsLakh(v) {
-    return (v / 100000).toFixed(2);
+/* number of days in the selected range, both ends included */
+function utsDayCount() {
+    var d = moment(utsTo, "YYYY-MM-DD").diff(moment(utsFrom, "YYYY-MM-DD"), "days") + 1;
+    return d > 0 ? d : 1;
+}
+
+function utsParams(cfg) {
+    var p = ["'" + utsFrom + "'", "'" + utsTo + "'"];
+    if (utsHasZoneFilter() || (cfg && cfg.alwaysZone)) {
+        p.push("'" + utsZone + "'");
+    }
+    return p;
+}
+
+/*
+ * cb(rows)      - called with result.data
+ * onError(msg)  - called on timeout / bad response / exception
+ */
+function utsCall(cfg, cb, onError) {
+    var req = { reportCode: cfg.reportCode, params: utsParams(cfg) };
+    var gen = utsGen;
+    var done = false;
+    var timer = null;
+
+    function fail(msg) {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        console.error("UTS " + cfg.reportCode + ": " + msg);
+        if (gen === utsGen && onError) onError(msg);
+    }
+
+    console.log("UTS request:", JSON.stringify(req));
+    timer = setTimeout(function () {
+        fail("request timed out. Check Network tab and backend mapping.");
+    }, UTS_TIMEOUT_MS);
+
+    try {
+        getWebServiceDatautsDashboard(req, UTS_REPORT_URL, function (result) {
+            if (done) return;
+            if (!result || !Array.isArray(result.data)) {
+                fail("invalid response");
+                return;
+            }
+            done = true;
+            clearTimeout(timer);
+            if (gen !== utsGen) return;          // a newer reload is running
+            cb(result.data);
+        });
+    } catch (e) {
+        fail("request failed: " + e);
+    }
+}
+
+/* ---------- Heading: From Date / To Date / no. of days ---------- */
+
+function utsUpdateHeading() {
+    var days = utsDayCount();
+    var zoneTxt = (utsHasZoneFilter() && utsZone !== "ALL");
+
+    $("#utsAITitle").text(zoneTxt ? "Zone " + utsZone + " Report" : "All India Report");
+    $("#utsAIDates").text(
+        "From Date: " + moment(utsFrom, "YYYY-MM-DD").format("DD-MM-YYYY")
+        + "   To Date: " + moment(utsTo, "YYYY-MM-DD").format("DD-MM-YYYY")
+        + "   (" + days + (days === 1 ? " day)" : " days)")
+    );
+}
+
+/* ---------- 1) POS report + avg tickets / passengers / earning KPIs ---------- */
+
+function utsPosMessage(text, cls) {
+    $("#posReportBody").html(
+        '<tr><td colspan="6" class="text-center ' + (cls || "") + '">' + utsEsc(text) + "</td></tr>"
+    );
 }
 
 function utsResetAvgKpis() {
@@ -763,54 +768,30 @@ function utsResetAvgKpis() {
 }
 
 function loadUtsPosReport() {
-    var $body = $("#posReportBody");
-
-    $body.html('<tr><td colspan="6" class="text-center">Loading...</td></tr>');
+    utsPosMessage("Loading...");
     utsResetAvgKpis();
 
-    utsCall(UTS_RPT_CFG.pos, function (response) {
-
-        var rows = Array.isArray(response)
-            ? response
-            : (response && Array.isArray(response.data) ? response.data : []);
-
+    utsCall(UTS_RPT_CFG.pos, function (rows) {
         if (!rows.length) {
-            $body.html(
-                '<tr><td colspan="6" class="text-center">Record not found</td></tr>'
-            );
+            utsPosMessage("Record not found");
             return;
         }
 
-        // POS values are totals for the selected range -> divide by no. of days.
-        // (set UTS_RPT_CFG.pos.valuesAreTotals = false if the procedure already
-        //  returns per-day averages)
-        var days = utsDayCount();
-        var divisor = UTS_RPT_CFG.pos.valuesAreTotals ? days : 1;
-
+        var divisor = UTS_RPT_CFG.pos.valuesAreTotals ? utsDayCount() : 1;
         var sumT = 0, sumP = 0, sumE = 0, sl = 0, html = "";
 
         rows.forEach(function (row) {
-            var v = Array.isArray(row)
-                ? row.slice()
-                : [
-                    row["Sl No."],
-                    row["POINT OF SALE"],
-                    row["MODES OF PAYMENT"],
-                    row["AVG. TICKETS/DAY"],
-                    row["AVG. PASSENGERS/DAY"],
-                    row["AVG. EARNING/DAY"]
-                ];
+            var v = Array.isArray(row) ? row.slice() : [
+                row["Sl No."], row["POINT OF SALE"], row["MODES OF PAYMENT"],
+                row["AVG. TICKETS/DAY"], row["AVG. PASSENGERS/DAY"], row["AVG. EARNING/DAY"]
+            ];
 
-            if (v.length === 5) {
-                v.unshift("");              // procedure sent no Sl No. column
-            }
+            if (v.length === 5) v.unshift("");      // procedure sent no Sl No. column
 
             var name = v[1] == null ? "" : String(v[1]);
 
-            // we build our own total row, so ignore one coming from the procedure
-            if (/^\s*(grand\s*)?total\s*$/i.test(name)) {
-                return;
-            }
+            // we add our own total row
+            if (/^\s*(grand\s*)?total\s*$/i.test(name)) return;
 
             var t = utsNum(v[3]), p = utsNum(v[4]), e = utsNum(v[5]);
 
@@ -833,97 +814,90 @@ function loadUtsPosReport() {
             + '<td class="text-right">' + utsFmt(sumP / divisor) + "</td>"
             + '<td class="text-right">' + utsLakh(sumE / divisor) + "</td></tr>";
 
-        $body.html(html);
+        $("#posReportBody").html(html);
 
-        // KPI strip = POS totals / no. of days
+        // KPI = POS total / no. of days
         $("#kpiAvgTkt").text(utsFmt(sumT / divisor));
         $("#kpiAvgPsgn").text(utsFmt(sumP / divisor));
         $("#kpiAvgEarn").text(utsLakh(sumE / divisor));
+    }, function (msg) {
+        utsPosMessage("Unable to load POS report (" + msg + ")", "text-danger");
     });
 }
 
-/* ---------- 2) KPI counts ---------- */
+/* ---------- 2) Terminals + locations (one report code) ---------- */
 
-function loadUtsKpiCounts() {
-    var c = UTS_RPT_CFG.kpi.col;
+function loadUtsTermLocCounts() {
+    var c = UTS_RPT_CFG.termLoc.col;
 
-    utsCall(UTS_RPT_CFG.kpi, function(rows) {
-        if (!rows.length) {
-            return;
-        }
+    $("#kpiTerminals, #kpiLocations").text("-");
 
-        var r = rows[0];
-
-        $("#kpiTerminals").text(utsFmt(r[c.terminals]));
-        $("#kpiLocations").text(utsFmt(r[c.locations]));
-        $("#kpiStations").text(utsFmt(r[c.stations]));
+    utsCall(UTS_RPT_CFG.termLoc, function (rows) {
+        if (!rows.length) return;
+        $("#kpiTerminals").text(utsFmt(rows[0][c.terminals]));
+        $("#kpiLocations").text(utsFmt(rows[0][c.locations]));
+    }, function () {
+        $("#kpiTerminals, #kpiLocations").text("Error");
     });
 }
 
-/* ---------- 3) Generic report ---------- */
+/* ---------- 3) Stations (its own report code) ---------- */
 
-function loadUtsReport2() {
-    var cfg = UTS_RPT_CFG.report2;
+function loadUtsStationCount() {
+    var c = UTS_RPT_CFG.station.col;
 
-    $("#report2Title").text(cfg.title);
+    $("#kpiStations").text("-");
 
-    $("#report2Head").html(
-        "<tr>"
-        + cfg.heads.map(function(h, i) {
-            return "<th"
-                + (i >= cfg.numericFromCol ? ' class="text-right"' : "")
-                + ">"
-                + utsEsc(h)
-                + "</th>";
-        }).join("")
-        + "</tr>"
-    );
-
-    utsCall(cfg, function(rows) {
-        if (!rows.length) {
-            $("#report2Body").html(
-                '<tr><td colspan="' + cfg.heads.length
-                + '" class="text-center">Record not found</td></tr>'
-            );
-            return;
-        }
-
-        $("#report2Body").html(
-            rows.map(function(r) {
-                return "<tr>"
-                    + cfg.heads.map(function(h, i) {
-                        return i >= cfg.numericFromCol
-                            ? '<td class="text-right">' + utsFmt(r[i]) + "</td>"
-                            : "<td>" + utsEsc(r[i]) + "</td>";
-                    }).join("")
-                    + "</tr>";
-            }).join("")
-        );
+    utsCall(UTS_RPT_CFG.station, function (rows) {
+        if (!rows.length) return;
+        $("#kpiStations").text(utsFmt(rows[0][c.stations]));
+    }, function () {
+        $("#kpiStations").text("Error");
     });
 }
 
-/* ---------- Reload everything for a (new) date range ---------- */
+/* ---------- Reload everything for a (new) range / zone ---------- */
 
-function utsReloadAll(fromYmd, toYmd) {
+function utsReloadAll(fromYmd, toYmd, zone) {
     if (fromYmd) utsFrom = fromYmd;
     if (toYmd) utsTo = toYmd;
+    if (zone != null) utsZone = utsCleanZone(zone);
 
+    if (!moment(utsFrom, "YYYY-MM-DD", true).isValid()) utsFrom = utsDefaultFrom();
+    if (!moment(utsTo, "YYYY-MM-DD", true).isValid()) utsTo = utsDefaultTo();
     if (utsTo < utsFrom) utsTo = utsFrom;
+
+    utsGen++;
 
     $("#utsFrom").val(utsFrom);
     $("#utsTo").val(utsTo);
+    $("#utsZone").val(utsZone);
 
-    loadUtsPosReport(); 
-    loadUtsKpiCounts();  
+    utsUpdateHeading();
+    loadUtsPosReport();
+    loadUtsTermLocCounts();
+    loadUtsStationCount();
 }
+
 /* ---------- Initialize ---------- */
 
-$(document).ready(function() {
-    // user changes date -> reload (inputs must give YYYY-MM-DD)
-    $(document).on("change", "#utsFrom, #utsTo", function() {
-        utsReloadAll($("#utsFrom").val(), $("#utsTo").val());
+$(document).ready(function () {
+    // dashboard <-> Full Report view
+    $(document).on("click", "#utsAIToggle", function (e) {
+        e.preventDefault();
+        utsSetFocus(!utsFocus);
     });
 
-    // default load = current financial year
-    utsReloadAll();
+    // Full Report view: Apply button / Enter in the zone box
+    $(document).on("click", "#utsApply", function () {
+        utsReloadAll($("#utsFrom").val(), $("#utsTo").val(), $("#utsZone").val());
+    });
+    $(document).on("keydown", "#utsZone", function (e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $("#utsApply").trigger("click");
+        }
+    });
+
+    utsReloadAll();       // default: this FY till yesterday, zone ALL
 });
